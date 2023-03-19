@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Перелік ботсадів України</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+
+<body>
+    <h2>Перелік ботсадів України</h2>
+    <form name="gardenForm">
+
+        <input type="hidden" name="id" value="0" />
+
+        <div class="form-group">
+            <label for="name">Назва ботсаду:</label>
+            <input class="form-control" name="name" />
+        </div>
+
+        <div class="form-group">
+            <label for="place">Місцезнаходження:</label>
+            <input class="form-control" name="place" />
+        </div>
+
+        <div class="form-group">
+            <label>
+                Дата заснування:
+                <input type="date" class="form-control" name="date" />
+            </label>
+        </div>
+
+        <div class="form-group">
+            <label>
+                Телефон:<br>
+                <input type="tel" name="phone" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" required>
+                <small>Format: 123-456-7890</small>
+            </label>
+        </div>
+
+        <div class="panel-body">
+            <button type="submit" class="btn btn-sm btn-primary">Зберегти</button>
+            <a id="reset" class="btn btn-sm btn-primary">Скинути</a>
+        </div>
+    </form>
+    <table class="table table-condensed table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Назва ботсаду</th>
+                <th>Місцезнаходження</th>
+                <th>Дата заснування</tр>
+                <th>Телефон</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+   
+    <script>
+    // Отримання всіх ботсадів
+        async function GetGardens() {
+            // надсилає запит і отримуємо відповідь
+            const response = await fetch("/api/gardens", {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            // Якщо запит пройшов нормально
+            if (response.ok === true) {
+                // получаем данные
+                const gardens = await response.json();
+                let rows = document.querySelector("tbody"); 
+                gardens.forEach(garden => {
+                    // додаємо отримані елементи до таблиці
+                    rows.append(row(garden));
+                });
+            }
+        }
+
+        // Отримання одного ботсаду
+        async function GetGarden(id) {
+            const response = await fetch("/api/gardens/" + id, {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const garden = await response.json();
+                const form = document.forms["gardenForm"];
+                form.elements["id"].value = garden._id;
+                form.elements["name"].value = garden.name;
+                form.elements["place"].value = garden.place;
+                form.elements["date"].value = garden.date;
+                form.elements["phone"].value = garden.phone;
+            }
+        }
+        // Додавання ботсаду
+        async function CreateGarden(gardenName, gardenPlace, gardenDate, gardenPhone) {
+  
+            const response = await fetch("api/gardens", {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: gardenName,
+                    place: gardenPlace,
+                    date: gardenDate,
+                    phone: gardenPhone
+                })
+            });
+            if (response.ok === true) {
+                const garden = await response.json();
+                reset();
+                document.querySelector("tbody").append(row(garden));
+            }
+        }
+        // Редагування ботсаду
+        async function EditGarden(gardenId, gardenName, gardenPlace, gardenDate, gardenPhone) {
+            const response = await fetch("api/gardens", {
+                method: "PUT",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: gardenId,
+                    name: gardenName,
+                    place: gardenPlace,
+                    date: gardenDate,
+                    phone: gardenPhone
+                })
+            });
+            if (response.ok === true) {
+                const garden = await response.json();
+                reset();
+                console.log(row(session));////////
+                document.querySelector("tr[data-rowid='" + garden._id + "']").replaceWith(row(garden));
+            }
+        }
+        // Видалення ботсаду
+        async function DeleteGarden(id) {
+            const response = await fetch("/api/gardens/" + id, {
+                method: "DELETE",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const garden = await response.json();
+                document.querySelector("tr[data-rowid='" + garden._id + "']").remove();
+            }
+        }
+  
+        // Скидання форми
+        function reset() {
+            const form = document.forms["gardenForm"];
+            form.reset();
+            form.elements["id"].value = 0;
+        }
+        // Чтворення рядка для таблиці
+        function row(garden) {
+  
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-rowid", garden._id);
+  
+            const idTd = document.createElement("td");
+            idTd.append(garden._id);
+            tr.append(idTd);
+  
+            const nameTd = document.createElement("td");
+            nameTd.append(garden.name);
+            tr.append(nameTd);
+  
+            const placeTd = document.createElement("td");
+            placeTd.append(garden.place);
+            tr.append(placeTd);
+
+            const dateTd = document.createElement("td");
+            dateTd.append(garden.date);
+            tr.append(dateTd);
+
+            const phoneTd = document.createElement("td");
+            phoneTd.append(garden.phone);
+            tr.append(phoneTd);
+              
+            const linksTd = document.createElement("td");
+  
+            const editLink = document.createElement("a");
+            editLink.setAttribute("data-id", garden._id);
+            editLink.setAttribute("style", "cursor:pointer;padding:15px;");
+            editLink.append("Змінити");
+            editLink.addEventListener("click", e => {
+                e.preventDefault();
+                GetGarden(garden._id);
+            });
+            linksTd.append(editLink);
+  
+            const removeLink = document.createElement("a");
+            removeLink.setAttribute("data-id", garden._id);
+            removeLink.setAttribute("style", "cursor:pointer;padding:15px;");
+            removeLink.append("Видалити");
+            removeLink.addEventListener("click", e => {
+                e.preventDefault();
+                DeleteGarden(garden._id);
+            });
+  
+            linksTd.append(removeLink);
+            tr.appendChild(linksTd);
+  
+            return tr;
+        }
+        // Скидання значень форми
+        document.getElementById("reset").click(function (e) {
+  
+            e.preventDefault();
+            reset();
+        })
+  
+        // Відправлення форми
+        document.forms["gardenForm"].addEventListener("submit", e => {
+            e.preventDefault();
+            const form = document.forms["gardenForm"];
+            const id = form.elements["id"].value;
+            const name = form.elements["name"].value;
+            const place = form.elements["place"].value;
+            const date = form.elements["date"].value;
+            const phone = form.elements["phone"].value;
+            if (id == 0)
+                CreateGarden(name, place, date, phone);
+            else
+                EditGarden(id, name, place, date, phone);
+        });
+  
+        // Завантаження ботсадів
+        GetGardens();
+    </script>
+</body>
+</html>
+
+
+
+

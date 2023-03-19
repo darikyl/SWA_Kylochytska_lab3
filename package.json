@@ -1,0 +1,9 @@
+{
+    "name": "lab3",
+    "version": "1.0.0",
+    "author": "Kylochytska Daria",
+    "dependencies": {
+        "express": "^4.18.2",
+        "mongodb": "^4.14.0"
+    }
+}
